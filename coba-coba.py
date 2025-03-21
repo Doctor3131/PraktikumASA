@@ -1,31 +1,73 @@
+import math
 
-def count_increasing_subsequences(nums1, nums2):
-    n = len(nums1)
-    
-    # Create a mapping of positions in the second list
-    pos_in_nums2 = {}
-    for i in range(n):
-        pos_in_nums2[nums2[i]] = i
-    
-    # Convert nums1 to their positions in nums2
-    nums1_in_nums2_pos = [pos_in_nums2[num] for num in nums1]
-    print((nums1_in_nums2_pos))
-    
-    # Count the number of increasing subsequences of length 3
-    count = 0
-    for i in range(n):
-        for j in range(i+1, n):
-            for k in range(j+1, n):
-                # Check if the sequence is increasing in nums1_in_nums2_pos
-                if nums1_in_nums2_pos[i] < nums1_in_nums2_pos[j] < nums1_in_nums2_pos[k]:
-                    count += 1
-                    
-    return count
+def isPrime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+    return True
 
-# Reading input
-nums1 = list(map(int, input().split()))
-nums2 = list(map(int, input().split()))
+def countPrimes(seq):
+    return sum(1 for x in seq if isPrime(x))
 
-# Calculate and print the result
-result = count_increasing_subsequences(nums1, nums2)
-print(result)
+def generatePrimes(n):
+    primes, num = [], 2
+    while len(primes) < n:
+        if isPrime(num):
+            primes.append(num)
+        num += 1
+    return primes
+
+def countMismatches(actual, expected):
+    for i, (a, e) in enumerate(zip(actual, expected)):
+        if a != e:
+            return i
+    return -1
+
+def generateSequence(seq, rule):
+    if rule == "arithmetic":
+        d = seq[1] - seq[0]
+        return [seq[0] + d * i for i in range(len(seq))]
+    if rule == "geometric":
+        r = seq[1] / seq[0]
+        return [int(seq[0] * (r ** i)) for i in range(len(seq))]
+    if rule == "fibonacci":
+        fib = seq[:2]
+        for _ in range(2, len(seq)):
+            fib.append(fib[-1] + fib[-2])
+        return fib
+    if rule == "square":
+        s = math.isqrt(seq[0])
+        return [(s + i) ** 2 for i in range(len(seq))]
+    if rule == "prime":
+        return generatePrimes(len(seq))
+    return []
+
+def detectPattern(seq):
+    patterns = ["arithmetic", "geometric", "fibonacci", "square", "prime"]
+    for pattern in patterns:
+        expected = generateSequence(seq, pattern)
+        if seq[:len(expected)] == expected:
+            return pattern, expected
+    return None, []
+
+def findOutlier(seq):
+    if countPrimes(seq) >= len(seq) / 2:
+        expected = generatePrimes(len(seq))
+        mismatchIdx = countMismatches(seq, expected)
+        return mismatchIdx if mismatchIdx != -1 else "Prime Pattern"
+    
+    mid = len(seq) // 2
+    left, right = seq[:mid], seq[mid:]
+    leftPattern, leftExpected = detectPattern(left)
+    rightPattern, rightExpected = detectPattern(right)
+    
+    if leftPattern and (mismatchIdx := countMismatches(left, leftExpected)) != -1:
+        return mismatchIdx
+    if rightPattern and (mismatchIdx := countMismatches(right, rightExpected)) != -1:
+        return mid + mismatchIdx
+    return "No Outlier Found"
+
+data = list(map(int, input().split()))
+print(findOutlier(data))
